@@ -7,12 +7,14 @@ public class PlayerController : MonoBehaviour {
     public float velocity = 10f;
     public float jumpForce = 100f;
     public Camera camera;
+    public Transform spawnPoint;
 
     private Transform transform;
     private Rigidbody2D rigidbody;
     private float move;
     private float jump;
     private bool facingRight;
+    private bool grounded;
 
     [Header("Sound Clips")]
     public AudioSource jumpSound;
@@ -29,13 +31,16 @@ public class PlayerController : MonoBehaviour {
         move = 0;
         jump = 0;
         facingRight = true;
+        grounded = false;
+        transform.position = spawnPoint.position;
     }
 
     public void FixedUpdate() {
 
-        move = normalize(Input.GetAxis("Horizontal"));
+        float axis = Input.GetAxis("Horizontal");
+        move = normalize(axis);
 
-
+        Debug.Log("Move: " + axis + " || " + move + " Grounded: " + grounded);
 
         if (move > 0f) {
             facingRight = true;
@@ -47,9 +52,14 @@ public class PlayerController : MonoBehaviour {
             move = 0f;
         }
 
-        if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.UpArrow) || Input.GetAxis("Vertical") > 0f) {
-            jump = 1f;
-            //jumpSound.Play();
+        if (grounded) {
+
+            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.UpArrow) || Input.GetAxis("Vertical") > 0f) {
+                jump = 1f;
+                //jumpSound.Play();
+            }
+        } else {
+            move = 0f;
         }
 
         rigidbody.AddForce(new Vector2(
@@ -74,16 +84,25 @@ public class PlayerController : MonoBehaviour {
     }
 
     private void OnCollisionStay2D(Collision2D other) {
-
+        if (other.gameObject.CompareTag("Platform")) {
+            grounded = true;
+        }
     }
 
     private void OnCollisionEnter2D(Collision2D other) {
+        if (other.gameObject.CompareTag("DeathPlane")) {
+            die();
+        }
     }
 
     public void OnCollisionExit2D(Collision2D other) {
-
+        grounded = false;
     }
 
+    public void die() {
+        //deathSound.Play();
+        transform.position = spawnPoint.position;
+    }
 
     private void moveCamera() {
 
