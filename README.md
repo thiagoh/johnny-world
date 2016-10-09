@@ -1,9 +1,19 @@
 # Johnny World Game
 
-Johnny Boy's Platformer 2D
+Johnny Boy's Platformer 2D.
 
-Johnny doesn't have a face yet. This red block is just a model for him
+## Elements:
+ - Box
+ - Board
+ - Silver coin
+ - Gold super coin
+ - Grass
+ - Jump Spring
 
-<img src="https://raw.githubusercontent.com/thiagoh/johnny-world/master/Assets/specs/world-1.png" />
+<img src="https://raw.githubusercontent.com/thiagoh/johnny-world/master/Assets/specs/shot1.PNG" />
 
-<img src="https://raw.githubusercontent.com/thiagoh/johnny-world/master/Assets/specs/world-2.png" />
+<img src="https://raw.githubusercontent.com/thiagoh/johnny-world/master/Assets/specs/shot2.PNG" />
+
+<img src="https://raw.githubusercontent.com/thiagoh/johnny-world/master/Assets/specs/shot3.PNG" />
+
+
