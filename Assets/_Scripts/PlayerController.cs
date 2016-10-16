@@ -4,8 +4,12 @@ using System;
 
 public class PlayerController : MonoBehaviour {
 
-    public float velocity = 30f;
-    public float jumpForce = 100f;
+    private static float MIN_VISIBLE_GAME_ITEM_X = -7.131f;
+    private static float MIN_VISIBLE_CAMERA_X = -1.2f;
+    private static float MAX_VELOCITY = 3f;
+
+    public float velocity;
+    public float jumpForce;
     public int rings = 0;
     public Camera camera;
     public Transform spawnPoint;
@@ -17,8 +21,7 @@ public class PlayerController : MonoBehaviour {
     private bool facingRight;
     private bool grounded;
     private int movingTo;
-
-    private static float MAX_VELOCITY = 5f;
+    private Animator animator;
 
     [Header("Sound Clips")]
     public AudioSource jumpSound;
@@ -42,6 +45,7 @@ public class PlayerController : MonoBehaviour {
     private void initialize() {
         transform = GetComponent<Transform>();
         rigidbody = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
         move = 0;
         jump = 0;
         facingRight = true;
@@ -51,67 +55,52 @@ public class PlayerController : MonoBehaviour {
 
     public void FixedUpdate() {
 
-        float axis = Input.GetAxisRaw("Horizontal");
-        move = normalize(axis);
+        movePlayer();
+        moveCamera();
+    }
 
-        //Debug.Log("Move: " + axis + " || " + move + " Grounded: " + grounded);
+    private void movePlayer() {
+        float move = Input.GetAxisRaw("Horizontal");
 
         if (move > 0f) {
+            animator.SetInteger("PlayerState", 1);
+            move = 1f;
             facingRight = true;
             flip();
         } else if (move < 0f) {
+            animator.SetInteger("PlayerState", 1);
+            move = -1f;
             facingRight = false;
             flip();
         } else {
+            animator.SetInteger("PlayerState", 0);
             move = 0f;
         }
 
         if (grounded) {
 
-            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.UpArrow)) {
+            if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.Space) || Input.GetKey(KeyCode.UpArrow)) {
                 jump = 1f;
-                //jumpSound.Play();
+                jumpSound.Play();
                 movingTo = rigidbody.velocity.x == 0f ? 0 : (int)(rigidbody.velocity.x / Math.Abs(rigidbody.velocity.x));
             }
 
         } else {
             //move = 0f;
-        }
-
-        //print("velocity: " + rigidbody.velocity + " axis: " + axis);
-        int currentMovingTo = rigidbody.velocity.x == 0f ? 0 : (int)(rigidbody.velocity.x / Math.Abs(rigidbody.velocity.x));
-        if (grounded || currentMovingTo == movingTo) {
-            if ((rigidbody.velocity.x >= 1f && axis < 0f)
-                ||
-                (rigidbody.velocity.x <= -1f && axis > 0f)) {
-                // moving to one direction but trying to break (move to another direction)
-                move = Mathf.Clamp(-rigidbody.velocity.x * 0.8f, -MAX_VELOCITY, MAX_VELOCITY);
-                print("BREAK! Move to " + (move > 0f ? "right" : "left") + " " + move);
-            }
-        }
-
-        if (move != 0f) {
-            print("Vel: " + rigidbody.velocity.x + " move: " + move);
-        }
-
-        //print("is between: " + vel: 3.788259 move: -3.030607)
-        //print("is between: " + (isBetween(3.788259f, -MAX_VELOCITY, 1f) ? "yes" : "no"));
-
-        if ((move > 0f && rigidbody.velocity.x < MAX_VELOCITY)
-            ||
-            (move < 0f && rigidbody.velocity.x > -MAX_VELOCITY)) {
-            print("Apply!");
-            rigidbody.AddForce(new Vector2(move * velocity, 0f), ForceMode2D.Force);
-        }
-
-        rigidbody.AddForce(new Vector2(0f, jump * jumpForce), ForceMode2D.Force);
-
-        if (jump > 0f) {
             jump = 0f;
         }
 
-        moveCamera();
-        Input.ResetInputAxes();
+        if (!grounded || jump > 0f) {
+            rigidbody.AddForce(new Vector2(move * velocity, jump * jumpForce), ForceMode2D.Force);
+
+        } else {
+            rigidbody.velocity = new Vector2(move * velocity, rigidbody.velocity.y);
+        }
+    }
+
+    public void LateUpdate() {
+
+        rigidbody.position = new Vector2(Mathf.Clamp(rigidbody.position.x, MIN_VISIBLE_GAME_ITEM_X, 999999f), rigidbody.position.y);
     }
 
     public static bool isBetween(float v, float from, float to) {
@@ -146,30 +135,21 @@ public class PlayerController : MonoBehaviour {
     }
 
     public void OnCollisionExit2D(Collision2D other) {
+        animator.SetInteger("PlayerState", 2);
         grounded = false;
     }
 
     public void die() {
-        //deathSound.Play();
+        deathSound.Play();
         transform.position = spawnPoint.position;
     }
 
     private void moveCamera() {
 
         camera.transform.position = new Vector3(
-                    transform.position.x,
+                    Mathf.Clamp(transform.position.x, MIN_VISIBLE_CAMERA_X, 999999f),
                     transform.position.y,
                     -10f);
     }
 
-    float normalize(float move) {
-
-        if (move > 0f) {
-            return 1f;
-        } else if (move < 0f) {
-            return -1f;
-        } else {
-            return 0f;
-        }
-    }
 }
