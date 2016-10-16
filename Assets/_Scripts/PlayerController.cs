@@ -17,13 +17,17 @@ public class PlayerController : MonoBehaviour {
     public Camera camera;
     public Transform spawnPoint;
 
+    private Transform sightStart;
+    private Transform sightEnd1;
+    private Transform sightEnd2;
+    private Transform sightEnd3;
     private Transform transform;
     private Rigidbody2D rigidbody;
     private float move;
     private float jump;
+    private bool springJump;
     private bool facingRight;
     private bool grounded;
-    private int movingTo;
     private Animator animator;
 
     [Header("Sound Clips")]
@@ -41,6 +45,13 @@ public class PlayerController : MonoBehaviour {
         transform = GetComponent<Transform>();
         rigidbody = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
+
+        sightStart = transform.Find("SightStart");
+        sightEnd1 = transform.Find("SightEnd1");
+        sightEnd2 = transform.Find("SightEnd2");
+        sightEnd3 = transform.Find("SightEnd3");
+
+        springJump = false;
         move = 0;
         jump = 0;
         rings = 0;
@@ -49,6 +60,12 @@ public class PlayerController : MonoBehaviour {
         facingRight = true;
         grounded = false;
         transform.position = spawnPoint.position;
+    }
+
+    public void Update() {
+        grounded = Physics2D.Linecast(sightStart.position, sightEnd1.position, 1 << LayerMask.NameToLayer("Solid"))
+            || Physics2D.Linecast(sightStart.position, sightEnd2.position, 1 << LayerMask.NameToLayer("Solid"))
+            || Physics2D.Linecast(sightStart.position, sightEnd3.position, 1 << LayerMask.NameToLayer("Solid"));
     }
 
     public void FixedUpdate() {
@@ -80,7 +97,11 @@ public class PlayerController : MonoBehaviour {
             if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.Space) || Input.GetKey(KeyCode.UpArrow)) {
                 jump = 1f;
                 jumpSound.Play();
-                movingTo = rigidbody.velocity.x == 0f ? 0 : (int)(rigidbody.velocity.x / Math.Abs(rigidbody.velocity.x));
+            }
+
+            if (springJump) {
+                jump = 1f;
+                jumpSound.Play();
             }
 
         } else {
@@ -89,7 +110,11 @@ public class PlayerController : MonoBehaviour {
         }
 
         if (!grounded || jump > 0f) {
-            rigidbody.AddForce(new Vector2(move * velocity, jump * jumpForce), ForceMode2D.Force);
+
+            float _jumpForce = springJump ? jumpForce * 2 : jumpForce;
+            springJump = false;
+
+            rigidbody.AddForce(new Vector2(move * velocity, jump * _jumpForce), ForceMode2D.Force);
 
         } else {
             rigidbody.velocity = new Vector2(move * velocity, rigidbody.velocity.y);
@@ -122,15 +147,26 @@ public class PlayerController : MonoBehaviour {
         }
     }
 
+    internal void incrementScore(int score) {
+        this.score += score;
+    }
+
     private void OnCollisionStay2D(Collision2D other) {
-        if (other.gameObject.CompareTag("Platform")) {
-            grounded = true;
+        //if (other.gameObject.CompareTag("Platform")) {
+        //    grounded = true;
+        //}
+
+        if (other.gameObject.CompareTag("Spring")) {
+            springJump = true;
         }
     }
 
     private void OnCollisionEnter2D(Collision2D other) {
         if (other.gameObject.CompareTag("DeathPlane")) {
             die();
+        }
+        if (other.gameObject.CompareTag("Enemy")) {
+            damage();
         }
     }
 
@@ -151,7 +187,7 @@ public class PlayerController : MonoBehaviour {
 
     public void OnCollisionExit2D(Collision2D other) {
         animator.SetInteger("PlayerState", 2);
-        grounded = false;
+        //grounded = false;
     }
 
     public void damage() {
