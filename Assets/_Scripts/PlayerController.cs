@@ -14,8 +14,9 @@ public class PlayerController : MonoBehaviour {
     public int lives { get; set; }
     public int score { get; set; }
 
-    public Camera camera;
-    public Transform spawnPoint;
+    private Camera camera;
+    private Transform spawnPoint;
+    private GameController gameController;
 
     private Transform sightStart;
     private Transform sightEnd1;
@@ -23,9 +24,11 @@ public class PlayerController : MonoBehaviour {
     private Transform sightEnd3;
     private Transform transform;
     private Rigidbody2D rigidbody;
+    private float superPlayerTime;
+    private bool superPlayer;
     private float move;
     private float jump;
-    private bool springJump;
+    private bool springBelow;
     private bool facingRight;
     private bool grounded;
     private Animator animator;
@@ -42,6 +45,11 @@ public class PlayerController : MonoBehaviour {
     }
 
     private void initialize() {
+
+        gameController = GameObject.FindObjectOfType<GameController>();
+        camera = GameObject.Find("MainCamera").GetComponent<Camera>();
+        spawnPoint = GameObject.Find("SpawnPoint").transform;
+
         transform = GetComponent<Transform>();
         rigidbody = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
@@ -51,7 +59,7 @@ public class PlayerController : MonoBehaviour {
         sightEnd2 = transform.Find("SightEnd2");
         sightEnd3 = transform.Find("SightEnd3");
 
-        springJump = false;
+        springBelow = false;
         move = 0;
         jump = 0;
         rings = 0;
@@ -59,13 +67,14 @@ public class PlayerController : MonoBehaviour {
         score = 0;
         facingRight = true;
         grounded = false;
+        superPlayerTime = 0f;
+        superPlayer = false;
+
         transform.position = spawnPoint.position;
     }
 
     public void Update() {
-        grounded = Physics2D.Linecast(sightStart.position, sightEnd1.position, 1 << LayerMask.NameToLayer("Solid"))
-            || Physics2D.Linecast(sightStart.position, sightEnd2.position, 1 << LayerMask.NameToLayer("Solid"))
-            || Physics2D.Linecast(sightStart.position, sightEnd3.position, 1 << LayerMask.NameToLayer("Solid"));
+        handleSuperItems();
     }
 
     public void FixedUpdate() {
@@ -74,7 +83,24 @@ public class PlayerController : MonoBehaviour {
         moveCamera();
     }
 
+    private void handleSuperItems() {
+        superPlayerTime += Time.deltaTime;
+
+        if (superPlayerTime >= 5f) {
+            superPlayer = false;
+            gameController.superPlayerSound.Stop();
+            gameController.backgroundSound.Play();
+        }
+    }
+
     private void movePlayer() {
+
+        grounded = Physics2D.Linecast(sightStart.position, sightEnd1.position, 1 << LayerMask.NameToLayer("Solid"))
+           || Physics2D.Linecast(sightStart.position, sightEnd2.position, 1 << LayerMask.NameToLayer("Solid"))
+           || Physics2D.Linecast(sightStart.position, sightEnd3.position, 1 << LayerMask.NameToLayer("Solid"));
+
+        springBelow = Physics2D.Linecast(sightStart.position, sightEnd2.position, 1 << LayerMask.NameToLayer("Spring"));
+
         float move = Input.GetAxisRaw("Horizontal");
 
         if (move > 0f) {
@@ -92,27 +118,29 @@ public class PlayerController : MonoBehaviour {
             move = 0f;
         }
 
-        if (grounded) {
-
-            if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.Space) || Input.GetKey(KeyCode.UpArrow)) {
-                jump = 1f;
-                jumpSound.Play();
-            }
-
-            if (springJump) {
-                jump = 1f;
-                jumpSound.Play();
-            }
+        if (springBelow) {
+            jump = 1f;
+            jumpSound.Play();
 
         } else {
-            //move = 0f;
-            jump = 0f;
+
+            if (grounded) {
+
+                if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.Space) || Input.GetKey(KeyCode.UpArrow)) {
+                    jump = 1f;
+                    jumpSound.Play();
+                }
+
+            } else {
+                //move = 0f;
+                jump = 0f;
+            }
         }
 
         if (!grounded || jump > 0f) {
 
-            float _jumpForce = springJump ? jumpForce * 2 : jumpForce;
-            springJump = false;
+            float _jumpForce = springBelow ? jumpForce * 3 : jumpForce;
+            springBelow = false;
 
             rigidbody.AddForce(new Vector2(move * velocity, jump * _jumpForce), ForceMode2D.Force);
 
@@ -156,9 +184,9 @@ public class PlayerController : MonoBehaviour {
         //    grounded = true;
         //}
 
-        if (other.gameObject.CompareTag("Spring")) {
-            springJump = true;
-        }
+        //if (other.gameObject.CompareTag("Spring")) {
+        //    springJump = true;
+        //}
     }
 
     private void OnCollisionEnter2D(Collision2D other) {
@@ -174,6 +202,19 @@ public class PlayerController : MonoBehaviour {
         if (other.gameObject.CompareTag("Coin")) {
             catchCoin(other.gameObject);
         }
+        if (other.gameObject.CompareTag("RedFlag")) {
+            spawnPoint.position = other.gameObject.transform.position;
+        }
+        if (other.gameObject.CompareTag("RedDiamond")) {
+            catchRedDiamond(other.gameObject);
+        }
+    }
+
+    private void catchRedDiamond(GameObject gameObject) {
+        superPlayerTime = 0;
+        superPlayer = true;
+        gameController.backgroundSound.Stop();
+        gameController.superPlayerSound.Play();
     }
 
     private void catchCoin(GameObject coin) {
@@ -192,6 +233,15 @@ public class PlayerController : MonoBehaviour {
 
     public void damage() {
 
+        if (superPlayer) {
+            return;
+        }
+
+        doDamage();
+    }
+
+    private void doDamage() {
+
         if (rings > 0) {
             loseCoinSound.Play();
             rings = 0;
@@ -203,6 +253,15 @@ public class PlayerController : MonoBehaviour {
     }
 
     public void die() {
+        if (superPlayer) {
+            return;
+        }
+
+        doDie();
+    }
+
+    public void doDie() {
+
         lives -= 1;
         rings = 0;
         deathSound.Play();

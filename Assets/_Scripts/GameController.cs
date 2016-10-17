@@ -9,6 +9,8 @@ using UnityEngine.SceneManagement;
 
 public class GameController : MonoBehaviour {
 
+    private PlayerController playerController;
+
     public static float MIN_VISIBLE_GAME_ITEM_X = -7.131f;
     public static float MIN_VISIBLE_CAMERA_X = -1.2f;
 
@@ -17,13 +19,9 @@ public class GameController : MonoBehaviour {
     public Text ScoreLabel;
     public Text RingsLabel;
 
-    public void updateUI() {
-        LivesLabel.text = "Lives: " + playerController.lives;
-        ScoreLabel.text = "Score: " + playerController.score;
-        RingsLabel.text = "Rings: " + playerController.rings;
-    }
-
-    private PlayerController playerController;
+    [Header("Audio clips")]
+    public AudioSource backgroundSound;
+    public AudioSource superPlayerSound;
 
     // Use this for initialization
     void Start() {
@@ -34,5 +32,11 @@ public class GameController : MonoBehaviour {
     void Update() {
 
         updateUI();
+    }
+
+    public void updateUI() {
+        LivesLabel.text = "Lives: " + playerController.lives;
+        ScoreLabel.text = "Score: " + playerController.score;
+        RingsLabel.text = "Rings: " + playerController.rings;
     }
 }

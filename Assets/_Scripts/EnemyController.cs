@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using System.Collections;
-using System;
 
 public class EnemyController : MonoBehaviour {
 
@@ -18,6 +17,8 @@ public class EnemyController : MonoBehaviour {
     private Animator animator;
     private bool grounded;
 
+    public bool jumper;
+
     [Header("Sound Clips")]
     public AudioSource deathSound;
 
@@ -34,7 +35,14 @@ public class EnemyController : MonoBehaviour {
 
         grounded = true;
         speed = INITIAL_SPEED;
+        lastJump = 0f;
+        checkLastJumpPeriod = 1f;
+        chanceOfJump = 0.4f;
     }
+
+    private float lastJump;
+    private float checkLastJumpPeriod;
+    private float chanceOfJump;
 
     void FixedUpdate() {
 
@@ -42,7 +50,7 @@ public class EnemyController : MonoBehaviour {
         if (grounded) {
 
             // move the object in the direction of his local scale
-            rigidbody.velocity = new Vector2(transform.localScale.x, 0) * speed;
+            rigidbody.velocity = new Vector2(transform.localScale.x * speed, rigidbody.velocity.y);
             animator.SetInteger("EnemyState", 1);
 
             bool isGroundAhead = Physics2D.Linecast(sightStart.position, sightEnd.position, 1 << LayerMask.NameToLayer("Solid"));
@@ -76,9 +84,24 @@ public class EnemyController : MonoBehaviour {
                 speed = INITIAL_SPEED;
             }
 
+            if (jumper && lastJump > checkLastJumpPeriod) {
+
+                lastJump = 0;
+                checkLastJumpPeriod = Random.Range(0.6f, 2f);
+
+                if (Random.Range(0f, 1f) <= chanceOfJump) {
+                    rigidbody.velocity = Vector2.zero;
+                    rigidbody.AddForce(Vector2.up * 400f, ForceMode2D.Force);
+                    animator.SetInteger("EnemyState", 0);
+                }
+            }
+
         } else {
+            rigidbody.velocity = new Vector2(0f, rigidbody.velocity.y);
             animator.SetInteger("EnemyState", 0);
         }
+
+        lastJump += Time.fixedDeltaTime;
     }
 
     // object is grounded if it stays on the platform
