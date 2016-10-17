@@ -6,6 +6,7 @@ public class PlayerController : MonoBehaviour {
 
     private static float MIN_VISIBLE_CAMERA_X = -1.2f;
     private static float MAX_VELOCITY = 3f;
+    private static float SUPER_PLAYER_BONUS_TIME = 8f;
 
     public float velocity;
     public float jumpForce;
@@ -84,13 +85,17 @@ public class PlayerController : MonoBehaviour {
     }
 
     private void handleSuperItems() {
-        superPlayerTime += Time.deltaTime;
 
-        if (superPlayerTime >= 5f) {
-            superPlayer = false;
-            gameController.superPlayerSound.Stop();
-            gameController.backgroundSound.Play();
+        if (superPlayer) {
+            superPlayerTime += Time.deltaTime;
+
+            if (superPlayerTime >= SUPER_PLAYER_BONUS_TIME) {
+                superPlayer = false;
+                gameController.superPlayerSound.Stop();
+                gameController.backgroundSound.Play();
+            }
         }
+
     }
 
     private void movePlayer() {
@@ -191,7 +196,7 @@ public class PlayerController : MonoBehaviour {
 
     private void OnCollisionEnter2D(Collision2D other) {
         if (other.gameObject.CompareTag("DeathPlane")) {
-            die();
+            doDie();
         }
         if (other.gameObject.CompareTag("Enemy")) {
             damage();
@@ -213,6 +218,7 @@ public class PlayerController : MonoBehaviour {
     private void catchRedDiamond(GameObject gameObject) {
         superPlayerTime = 0;
         superPlayer = true;
+        gameObject.transform.position = Vector2.right * 99999f;
         gameController.backgroundSound.Stop();
         gameController.superPlayerSound.Play();
     }
@@ -266,6 +272,7 @@ public class PlayerController : MonoBehaviour {
         rings = 0;
         deathSound.Play();
         transform.position = spawnPoint.position;
+        superPlayer = false;
 
         RestartPositionOnPlayerDeath[] routines = GameObject.FindObjectsOfType<RestartPositionOnPlayerDeath>();
 

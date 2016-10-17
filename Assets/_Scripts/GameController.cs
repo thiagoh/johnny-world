@@ -19,8 +19,10 @@ public class GameController : MonoBehaviour {
     public Text ScoreLabel;
     public Text RingsLabel;
 
-    [Header("Audio clips")]
+    [Header("Sound clips")]
+    // background song
     public AudioSource backgroundSound;
+    // super player sound
     public AudioSource superPlayerSound;
 
     // Use this for initialization
@@ -30,7 +32,6 @@ public class GameController : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
-
         updateUI();
     }
 
