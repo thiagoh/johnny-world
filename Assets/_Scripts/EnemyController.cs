@@ -4,12 +4,13 @@ using System.Collections;
 public class EnemyController : MonoBehaviour {
 
     private Transform sightStart;
+    private Transform sightMiddle;
     private Transform sightEnd;
     private Transform lineOfSight;
 
-    private static float MAX_SPEED = 8;
-    private static float INITIAL_SPEED = 5;
-    private static int POINTS_EARNED_BY_KILLING_ME = 100;
+    private static float MAX_SPEED = 6;
+    private static float INITIAL_SPEED = 3;
+    public static int POINTS_EARNED_BY_KILLING_ME = 100;
 
     private float speed;
     private Transform transform;
@@ -30,6 +31,7 @@ public class EnemyController : MonoBehaviour {
         animator = GetComponent<Animator>();
 
         sightStart = transform.Find("SightStart");
+        sightMiddle = transform.Find("SightMiddle");
         sightEnd = transform.Find("SightEnd");
         lineOfSight = transform.Find("LineOfSight");
 
@@ -54,6 +56,7 @@ public class EnemyController : MonoBehaviour {
             animator.SetInteger("EnemyState", 1);
 
             bool isGroundAhead = Physics2D.Linecast(sightStart.position, sightEnd.position, 1 << LayerMask.NameToLayer("Solid"));
+            bool isObstacleAhead = Physics2D.Linecast(sightStart.position, sightMiddle.position, 1 << LayerMask.NameToLayer("Solid"));
             bool isPlayerDetected = Physics2D.Linecast(sightStart.position, lineOfSight.position, 1 << LayerMask.NameToLayer("Player"));
 
             // for debugging purposes only
@@ -61,7 +64,7 @@ public class EnemyController : MonoBehaviour {
             Debug.DrawLine(sightStart.position, lineOfSight.position);
 
             // check if there is ground ahead for the object to walk
-            if (isGroundAhead == false) {
+            if (isGroundAhead == false || isObstacleAhead) {
                 // flip the direction
                 flip();
 
@@ -120,17 +123,5 @@ public class EnemyController : MonoBehaviour {
 
     private void flip() {
         transform.localScale = new Vector2(-transform.localScale.x, transform.localScale.y);
-    }
-
-    public void OnTriggerEnter2D(Collider2D other) {
-        if (other.gameObject.CompareTag("Player")) {
-            deathSound.Play();
-            gameObject.transform.position = Vector2.one * 99999999f;
-
-            PlayerController playerController = other.gameObject.GetComponent<PlayerController>();
-            playerController.incrementScore(POINTS_EARNED_BY_KILLING_ME);
-
-            Destroy(gameObject, 3);
-        }
     }
 }
