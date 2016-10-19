@@ -11,7 +11,7 @@ public class GameController : MonoBehaviour {
 
     private PlayerController playerController;
 
-    public static float MIN_VISIBLE_GAME_ITEM_X = -7.131f;
+    public static float MIN_VISIBLE_GAME_ITEM_X = -6.4f;
     public static float MIN_VISIBLE_CAMERA_X = -1.2f;
 
     [Header("UI Objects")]

@@ -16,17 +16,23 @@ public class DamagePlayerScript : MonoBehaviour {
     }
 
     public void OnCollisionEnter2D(Collision2D other) {
-
         if (other.gameObject.CompareTag("Player")) {
+            print("OnCollisionEnter2D Player");
             damage(other.gameObject);
         }
     }
 
     public void OnCollisionStay2D(Collision2D other) {
-
         if (other.gameObject.CompareTag("Player")) {
+            print("OnCollisionStay2D Player");
             damage(other.gameObject);
         }
     }
 
+    public void OnTriggerEnter2D(Collider2D other) {
+        if (other.gameObject.CompareTag("Player")) {
+            print("OnTriggerEnter2D Player");
+            damage(other.gameObject);
+        }
+    }
 }

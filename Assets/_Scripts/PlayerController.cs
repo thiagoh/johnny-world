@@ -15,7 +15,7 @@ public class PlayerController : MonoBehaviour {
     public int lives { get; set; }
     public int score { get; set; }
 
-    private Camera camera;
+    private Camera _camera;
     private Transform spawnPoint;
     private GameController gameController;
 
@@ -23,16 +23,19 @@ public class PlayerController : MonoBehaviour {
     private Transform sightEnd1;
     private Transform sightEnd2;
     private Transform sightEnd3;
-    private Transform transform;
-    private Rigidbody2D rigidbody;
+    private Transform _transform;
+    private Rigidbody2D _rigidbody;
     private float superPlayerTime;
     private bool superPlayer;
     private float move;
     private float jump;
+    private float lastJump;
+    private float lastDeath;
     private bool springBelow;
     private bool facingRight;
     private bool grounded;
-    private Animator animator;
+    private Animator _animator;
+    private bool canJumpAgain;
 
     [Header("Sound Clips")]
     public AudioSource jumpSound;
@@ -48,17 +51,17 @@ public class PlayerController : MonoBehaviour {
     private void initialize() {
 
         gameController = GameObject.FindObjectOfType<GameController>();
-        camera = GameObject.Find("MainCamera").GetComponent<Camera>();
+        _camera = GameObject.Find("MainCamera").GetComponent<Camera>();
         spawnPoint = GameObject.Find("SpawnPoint").transform;
 
-        transform = GetComponent<Transform>();
-        rigidbody = GetComponent<Rigidbody2D>();
-        animator = GetComponent<Animator>();
+        _transform = GetComponent<Transform>();
+        _rigidbody = GetComponent<Rigidbody2D>();
+        _animator = GetComponent<Animator>();
 
-        sightStart = transform.Find("SightStart");
-        sightEnd1 = transform.Find("SightEnd1");
-        sightEnd2 = transform.Find("SightEnd2");
-        sightEnd3 = transform.Find("SightEnd3");
+        sightStart = _transform.Find("SightStart");
+        sightEnd1 = _transform.Find("SightEnd1");
+        sightEnd2 = _transform.Find("SightEnd2");
+        sightEnd3 = _transform.Find("SightEnd3");
 
         springBelow = false;
         move = 0;
@@ -70,8 +73,12 @@ public class PlayerController : MonoBehaviour {
         grounded = false;
         superPlayerTime = 0f;
         superPlayer = false;
+        canJumpAgain = true;
 
-        transform.position = spawnPoint.position;
+        lastJump = 0f;
+        lastDeath = 0f;
+
+        _transform.position = spawnPoint.position;
     }
 
     public void Update() {
@@ -95,10 +102,11 @@ public class PlayerController : MonoBehaviour {
                 gameController.backgroundSound.Play();
             }
         }
-
     }
 
     private void movePlayer() {
+
+        lastDeath += Time.fixedDeltaTime;
 
         grounded = Physics2D.Linecast(sightStart.position, sightEnd1.position, 1 << LayerMask.NameToLayer("Solid"))
            || Physics2D.Linecast(sightStart.position, sightEnd2.position, 1 << LayerMask.NameToLayer("Solid"))
@@ -106,38 +114,45 @@ public class PlayerController : MonoBehaviour {
 
         springBelow = Physics2D.Linecast(sightStart.position, sightEnd2.position, 1 << LayerMask.NameToLayer("Spring"));
 
-        float move = Input.GetAxisRaw("Horizontal");
+        float move = 0f;
 
-        if (move > 0f) {
-            animator.SetInteger("PlayerState", 1);
-            move = 1f;
-            facingRight = true;
-            flip();
-        } else if (move < 0f) {
-            animator.SetInteger("PlayerState", 1);
-            move = -1f;
-            facingRight = false;
-            flip();
-        } else {
-            animator.SetInteger("PlayerState", 0);
-            move = 0f;
+        if (lastDeath > 2f) {
+
+            move = Input.GetAxisRaw("Horizontal");
+
+            if (move > 0f) {
+                _animator.SetInteger("PlayerState", 1);
+                move = 1f;
+                facingRight = true;
+                flip();
+            } else if (move < 0f) {
+                _animator.SetInteger("PlayerState", 1);
+                move = -1f;
+                facingRight = false;
+                flip();
+            } else {
+                _animator.SetInteger("PlayerState", 0);
+                move = 0f;
+            }
         }
 
         if (springBelow) {
             jump = 1f;
+            lastJump = 0f;
             jumpSound.Play();
 
         } else {
 
             if (grounded) {
 
-                if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.Space) || Input.GetKey(KeyCode.UpArrow)) {
+                if (canJumpAgain && Input.GetKey(KeyCode.W)) {
+                    canJumpAgain = false;
                     jump = 1f;
+                    lastJump = 0f;
                     jumpSound.Play();
                 }
 
             } else {
-                //move = 0f;
                 jump = 0f;
             }
         }
@@ -146,19 +161,24 @@ public class PlayerController : MonoBehaviour {
 
             float _jumpForce = springBelow ? jumpForce * 3 : jumpForce;
             springBelow = false;
-
-            rigidbody.AddForce(new Vector2(move * velocity, jump * _jumpForce), ForceMode2D.Force);
+            _rigidbody.AddForce(new Vector2(move * velocity, jump * _jumpForce), ForceMode2D.Force);
 
         } else {
-            rigidbody.velocity = new Vector2(move * velocity, rigidbody.velocity.y);
+            _rigidbody.velocity = new Vector2(move * velocity, _rigidbody.velocity.y);
         }
+
+        if (!canJumpAgain) {
+            canJumpAgain = (lastJump > 0.6f && Input.GetKeyUp(KeyCode.W)) || lastJump > 0.8f;
+        }
+
+        lastJump += Time.fixedDeltaTime;
     }
 
     public void LateUpdate() {
 
-        rigidbody.position = new Vector2(
-                Mathf.Clamp(rigidbody.position.x, GameController.MIN_VISIBLE_GAME_ITEM_X, 999999f),
-                rigidbody.position.y);
+        _rigidbody.position = new Vector2(
+                Mathf.Clamp(_rigidbody.position.x, GameController.MIN_VISIBLE_GAME_ITEM_X, 999999f),
+                _rigidbody.position.y);
     }
 
     public static bool isBetween(float v, float from, float to) {
@@ -174,9 +194,9 @@ public class PlayerController : MonoBehaviour {
 
     private void flip() {
         if (facingRight) {
-            transform.localScale = new Vector2(Math.Abs(transform.localScale.x), Math.Abs(transform.localScale.y));
+            _transform.localScale = new Vector2(Math.Abs(_transform.localScale.x), Math.Abs(_transform.localScale.y));
         } else {
-            transform.localScale = new Vector2(-Math.Abs(transform.localScale.x), Math.Abs(transform.localScale.y));
+            _transform.localScale = new Vector2(-Math.Abs(_transform.localScale.x), Math.Abs(_transform.localScale.y));
         }
     }
 
@@ -197,21 +217,46 @@ public class PlayerController : MonoBehaviour {
     private void OnCollisionEnter2D(Collision2D other) {
         if (other.gameObject.CompareTag("DeathPlane")) {
             doDie();
-        }
-        if (other.gameObject.CompareTag("Enemy")) {
-            damage();
+
+        } else if (other.gameObject.CompareTag("Enemy")) {
+
+            if (superPlayer) {
+
+                EnemyController enemyController = other.gameObject.GetComponent<EnemyController>();
+                if (enemyController != null) {
+                    enemyController.die();
+                }
+            } else {
+                damage();
+            }
         }
     }
 
     public void OnTriggerEnter2D(Collider2D other) {
         if (other.gameObject.CompareTag("Coin")) {
             catchCoin(other.gameObject);
-        }
-        if (other.gameObject.CompareTag("RedFlag")) {
+
+        } else if (other.gameObject.CompareTag("RedFlag")) {
             spawnPoint.position = other.gameObject.transform.position;
-        }
-        if (other.gameObject.CompareTag("RedDiamond")) {
+            FlagController flagController = other.gameObject.GetComponent<FlagController>();
+
+            if (flagController != null) {
+                flagController.check();
+            }
+
+        } else if (other.gameObject.CompareTag("RedDiamond")) {
             catchRedDiamond(other.gameObject);
+        } else if (other.gameObject.CompareTag("Enemy")) {
+
+            if (superPlayer) {
+
+                EnemyController enemyController = other.gameObject.GetComponent<EnemyController>();
+                if (enemyController != null) {
+                    enemyController.die();
+                }
+            } else {
+                damage();
+            }
         }
     }
 
@@ -233,7 +278,7 @@ public class PlayerController : MonoBehaviour {
     }
 
     public void OnCollisionExit2D(Collision2D other) {
-        animator.SetInteger("PlayerState", 2);
+        _animator.SetInteger("PlayerState", 2);
         //grounded = false;
     }
 
@@ -251,7 +296,11 @@ public class PlayerController : MonoBehaviour {
         if (rings > 0) {
             loseCoinSound.Play();
             rings = 0;
-            transform.position = spawnPoint.position;
+            _rigidbody.velocity = Vector2.zero;
+            _transform.position = spawnPoint.position;
+            _animator.SetInteger("PlayerState", 0);
+            lastDeath = 0f;
+
         } else if (rings <= 0) {
             rings = 0;
             die();
@@ -271,21 +320,30 @@ public class PlayerController : MonoBehaviour {
         lives -= 1;
         rings = 0;
         deathSound.Play();
-        transform.position = spawnPoint.position;
-        superPlayer = false;
+        _rigidbody.velocity = Vector2.zero;
+        _transform.position = spawnPoint.position;
+        _animator.SetInteger("PlayerState", 0);
+
+        if (superPlayer) {
+            gameController.superPlayerSound.Stop();
+            gameController.backgroundSound.Play();
+            superPlayer = false;
+        }
 
         RestartPositionOnPlayerDeath[] routines = GameObject.FindObjectsOfType<RestartPositionOnPlayerDeath>();
 
         foreach (var item in routines) {
             item.restart();
         }
+
+        lastDeath = 0f;
     }
 
     private void moveCamera() {
 
-        camera.transform.position = new Vector3(
-                    Mathf.Clamp(transform.position.x, MIN_VISIBLE_CAMERA_X, 999999f),
-                    Mathf.Clamp(transform.position.y, 0f, 999999f),
+        _camera.transform.position = new Vector3(
+                    Mathf.Clamp(_transform.position.x, MIN_VISIBLE_CAMERA_X, 999999f),
+                    Mathf.Clamp(_transform.position.y, 0f, 999999f),
                     -10f);
     }
 
