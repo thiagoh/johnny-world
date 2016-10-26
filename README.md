@@ -10,10 +10,6 @@ Johnny Boy's Platformer 2D.
  - Grass
  - Jump Spring
 
-<img src="https://raw.githubusercontent.com/thiagoh/johnny-world/master/Assets/specs/shot1.PNG" />
-
-<img src="https://raw.githubusercontent.com/thiagoh/johnny-world/master/Assets/specs/shot2.PNG" />
-
-<img src="https://raw.githubusercontent.com/thiagoh/johnny-world/master/Assets/specs/shot3.PNG" />
+<img src="https://raw.githubusercontent.com/thiagoh/johnny-world/master/specs/shot4.PNG" />
 
 
