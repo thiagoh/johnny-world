@@ -4,8 +4,6 @@ using System;
 
 public class PlayerController : MonoBehaviour {
 
-    // min visible x of any item in the game
-    private static float MIN_VISIBLE_CAMERA_X = -1.2f;
     // max velocity permitted
     private static float MAX_VELOCITY = 3f;
     // how long is the player going to be super in case of catch a red diamond
@@ -64,7 +62,7 @@ public class PlayerController : MonoBehaviour {
     private bool canJumpAgain;
     // is in boss phase
     private bool bossPhase;
-
+    private float lastDamage;
     // player's sight start
     private Transform sightStart;
     // player's sight end 1
@@ -107,7 +105,7 @@ public class PlayerController : MonoBehaviour {
         move = 0;
         jump = 0;
         rings = 0;
-        lives = 5;
+        lives = 10;
         score = 0;
         facingRight = true;
         grounded = false;
@@ -119,7 +117,7 @@ public class PlayerController : MonoBehaviour {
         lastDamage = 0f;
         lastDeath = 0f;
         minXPermittedForPlayer = GameController.MIN_VISIBLE_GAME_ITEM_X;
-        minXPermittedForCamera = MIN_VISIBLE_CAMERA_X;
+        minXPermittedForCamera = GameController.MIN_VISIBLE_CAMERA_X;
         _transform.position = spawnPoint.position;
     }
 
@@ -202,7 +200,7 @@ public class PlayerController : MonoBehaviour {
 
         if (!grounded || jump > 0f) {
 
-            float _jumpForce = springBelow ? jumpForce * 3 : jumpForce;
+            float _jumpForce = springBelow ? jumpForce * 2 : jumpForce;
             springBelow = false;
             _rigidbody.AddForce(new Vector2(move * velocity, jump * _jumpForce), ForceMode2D.Force);
 
@@ -227,7 +225,7 @@ public class PlayerController : MonoBehaviour {
     private void moveCamera() {
 
         _camera.transform.position = new Vector3(
-                    Mathf.Clamp(_transform.position.x, minXPermittedForCamera + _camera.orthographicSize,
+                    Mathf.Clamp(_transform.position.x, minXPermittedForCamera,
                     gameEndPlane.position.x - _camera.orthographicSize),
                     Mathf.Clamp(_transform.position.y, 0f, 999999f),
                     -10f);
@@ -274,7 +272,7 @@ public class PlayerController : MonoBehaviour {
             }
         }
     }
-    private float lastDamage;
+
     public void OnTriggerEnter2D(Collider2D other) {
         if (other.gameObject.CompareTag("Coin")) {
             catchCoin(other.gameObject);
@@ -359,6 +357,8 @@ public class PlayerController : MonoBehaviour {
 
     private void doDamage() {
 
+        lastDamage = 0f;
+
         if (rings > 0) {
             loseCoinSound.Play();
             rings = 0;
@@ -366,7 +366,6 @@ public class PlayerController : MonoBehaviour {
             _transform.position = spawnPoint.position;
             _animator.SetInteger("PlayerState", 0);
             lastDeath = 0f;
-            lastDamage = 0f;
 
         } else if (rings <= 0) {
             rings = 0;
@@ -404,8 +403,10 @@ public class PlayerController : MonoBehaviour {
         }
 
         lastDeath = 0f;
+        lastDamage = 0f;
+
+        if (lives <= 0) {
+            gameController.gameOver();
+        }
     }
-
-
-
 }

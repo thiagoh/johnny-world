@@ -12,6 +12,7 @@ public class EnemyController : MonoBehaviour {
     public static int POINTS_EARNED_BY_KILLING_REGULAR_ENEMY = 100;
 
     private PlayerController playerController;
+    private GameController gameController;
     private Transform _transform;
     private Rigidbody2D _rigidbody;
     private Animator _animator;
@@ -54,6 +55,7 @@ public class EnemyController : MonoBehaviour {
     void Start() {
 
         playerController = GameObject.FindObjectOfType<PlayerController>();
+        gameController = GameObject.FindObjectOfType<GameController>();
         _rigidbody = GetComponent<Rigidbody2D>();
         _transform = GetComponent<Transform>();
         _animator = GetComponent<Animator>();
@@ -203,6 +205,10 @@ public class EnemyController : MonoBehaviour {
         }
 
         Destroy(gameObject, 3);
+
+        if (boss) {
+            gameController.finishGame();
+        }
     }
 
     private void flip() {
