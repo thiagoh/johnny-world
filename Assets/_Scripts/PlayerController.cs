@@ -251,22 +251,18 @@ public class PlayerController : MonoBehaviour {
         this.score += score;
     }
 
-    private void OnCollisionStay2D(Collision2D other) {
-        //if (other.gameObject.CompareTag("Platform")) {
-        //    grounded = true;
-        //}
-
-        //if (other.gameObject.CompareTag("Spring")) {
-        //    springJump = true;
-        //}
-    }
-
     private void OnCollisionEnter2D(Collision2D other) {
         if (other.gameObject.CompareTag("DeathPlane")) {
             doDie();
+        } else if (other.gameObject.CompareTag("EnemyHurtPoint")) {
 
-        } else if (other.gameObject.CompareTag("Enemy")) {
+            EnemyController enemyController = other.gameObject.GetComponent<EnemyController>();
+            if (enemyController != null) {
+                enemyController.damage();
+            }
 
+        } else if (other.gameObject.CompareTag("EnemyBody")) {
+            print("OnCollisionEnter2D other.gameObject.CompareTag(\"EnemyBody\")");
             if (superPlayer) {
 
                 EnemyController enemyController = other.gameObject.GetComponent<EnemyController>();
@@ -295,7 +291,14 @@ public class PlayerController : MonoBehaviour {
             catchRedDiamond(other.gameObject);
         } else if (other.gameObject.CompareTag("BossPhase")) {
             enterBossPhase(other.gameObject);
-        } else if (other.gameObject.CompareTag("Enemy")) {
+        } else if (other.gameObject.CompareTag("EnemyHurtPoint")) {
+
+            EnemyController enemyController = other.gameObject.GetComponent<EnemyController>();
+            if (enemyController != null) {
+                enemyController.damage();
+            }
+        } else if (other.gameObject.CompareTag("EnemyBody")) {
+            print("OnTriggerEnter2D other.gameObject.CompareTag(\"EnemyBody\")");
 
             if (superPlayer) {
 

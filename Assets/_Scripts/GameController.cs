@@ -22,6 +22,8 @@ public class GameController : MonoBehaviour {
     [Header("Sound clips")]
     // background sound track
     public AudioSource backgroundSound;
+    // finish game sound track
+    public AudioSource finishGameSound;
     // boss phase sound track
     public AudioSource bossPhaseSound;
     // super player sound track
