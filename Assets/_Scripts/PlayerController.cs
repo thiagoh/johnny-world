@@ -2,6 +2,12 @@
 using System.Collections;
 using System;
 
+/**
+ * Author: Thiago de Andrade Souza
+ * SudentID: 300886181
+ * PlayerController class: controls the player
+ * Last Modified: 10/26/2016
+ */
 public class PlayerController : MonoBehaviour {
 
     // max velocity permitted

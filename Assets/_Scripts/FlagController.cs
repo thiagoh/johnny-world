@@ -1,6 +1,12 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+/**
+ * Author: Thiago de Andrade Souza
+ * SudentID: 300886181
+ * FlagController class: controls red flags
+ * Last Modified: 10/26/2016
+ */
 public class FlagController : MonoBehaviour {
 
     private bool _checked;

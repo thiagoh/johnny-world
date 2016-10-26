@@ -1,25 +1,47 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+/**
+ * Author: Thiago de Andrade Souza
+ * SudentID: 300886181
+ * EnemyController class: controls the behaviour of enemies and the boss
+ * Last Modified: 10/26/2016
+ */
 public class EnemyController : MonoBehaviour {
 
+    // max speed 
     private static float MAX_SPEED = 3.5f;
+    // initial speed
     private static float INITIAL_SPEED = 2f;
+    // max speed of boss
     private static float MAX_BOSS_SPEED = MAX_SPEED * 2f;
+    // initial speed of boss
     private static float INITIAL_BOSS_SPEED = INITIAL_SPEED * 2f;
+    // walk faster for seconds
     private static float WALK_FASTER_WHEN_DETECT_PLAYER_DURATION = 3f;
+    // how many points for killing
     public static int POINTS_EARNED_BY_KILLING_BOSS = 1000;
+    // how many points for killing
     public static int POINTS_EARNED_BY_KILLING_REGULAR_ENEMY = 100;
 
+    // player controller reference
     private PlayerController playerController;
+    // player controller reference
     private GameController gameController;
+    // transform reference
     private Transform _transform;
+    // rigidbody reference
     private Rigidbody2D _rigidbody;
+    // animator reference
     private Animator _animator;
 
+    // sight start
     private Transform sightStart;
+    // sight middle
     private Transform sightMiddle;
+    // sight end
     private Transform sightEnd;
+    // sight feet
     private Transform sightFeet;
     private Transform lineOfSight;
 

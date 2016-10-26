@@ -1,7 +1,12 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System;
-
+/**
+ * Author: Thiago de Andrade Souza
+ * SudentID: 300886181
+ * DamagePlayerScript class: controls how the player is going to be damaged
+ * Last Modified: 10/26/2016
+ */
 public class DamagePlayerScript : MonoBehaviour {
 
     private PlayerController controller;

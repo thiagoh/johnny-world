@@ -8,8 +8,15 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System;
 
+/**
+ * Author: Thiago de Andrade Souza
+ * SudentID: 300886181
+ * GameController class: controls the game
+ * Last Modified: 10/26/2016
+ */
 public class GameController : MonoBehaviour {
 
+    // player reference
     private PlayerController playerController;
     // min visible x of any item in the game
     public static float MIN_VISIBLE_GAME_ITEM_X = -7.2f;

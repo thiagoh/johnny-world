@@ -1,6 +1,13 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+
+/**
+ * Author: Thiago de Andrade Souza
+ * SudentID: 300886181
+ * RestartPositionOnPlayerDeath class: restarts the position of game items
+ * Last Modified: 10/26/2016
+ */
 public class RestartPositionOnPlayerDeath : MonoBehaviour {
 
 	private Transform transform;

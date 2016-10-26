@@ -1,6 +1,12 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+/**
+ * Author: Thiago de Andrade Souza
+ * SudentID: 300886181
+ * RestrictBoundariesScript class: controlls boundaries of objects
+ * Last Modified: 10/26/2016
+ */
 public class RestrictBoundariesScript : MonoBehaviour {
 
     void LateUpdate() {

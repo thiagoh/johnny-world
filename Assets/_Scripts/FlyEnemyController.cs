@@ -1,6 +1,12 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+/**
+ * Author: Thiago de Andrade Souza
+ * SudentID: 300886181
+ * FlyEnemyController class: controls the fly enemy 
+ * Last Modified: 10/26/2016
+ */
 public class FlyEnemyController : MonoBehaviour {
 
     private static float MAX_SPEED = 5f;
