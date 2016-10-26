@@ -28,6 +28,7 @@ public class PlayerController : MonoBehaviour {
     private Transform spawnPoint;
     // boss phase spawn point of player
     private Transform bossPhaseSpawnPoint;
+    private Transform gameEndPlane;
     // reference to game controller
     private GameController gameController;
     // min X is permitted to player move
@@ -90,6 +91,7 @@ public class PlayerController : MonoBehaviour {
         _camera = GameObject.Find("MainCamera").GetComponent<Camera>();
         spawnPoint = GameObject.Find("SpawnPoint").transform;
         bossPhaseSpawnPoint = GameObject.Find("BossPhaseSpawnPoint").transform;
+        gameEndPlane = GameObject.Find("GameEndPlane").transform;
 
         _transform = GetComponent<Transform>();
         _rigidbody = GetComponent<Rigidbody2D>();
@@ -114,6 +116,7 @@ public class PlayerController : MonoBehaviour {
         canJumpAgain = true;
 
         lastJump = 0f;
+        lastDamage = 0f;
         lastDeath = 0f;
         minXPermittedForPlayer = GameController.MIN_VISIBLE_GAME_ITEM_X;
         minXPermittedForCamera = MIN_VISIBLE_CAMERA_X;
@@ -122,6 +125,7 @@ public class PlayerController : MonoBehaviour {
 
     public void Update() {
         handleSuperItems();
+        lastDamage += Time.deltaTime;
     }
 
     public void FixedUpdate() {
@@ -216,14 +220,15 @@ public class PlayerController : MonoBehaviour {
     public void LateUpdate() {
 
         _rigidbody.position = new Vector2(
-                Mathf.Clamp(_rigidbody.position.x, minXPermittedForPlayer, 999999f),
+                Mathf.Clamp(_rigidbody.position.x, minXPermittedForPlayer, gameEndPlane.position.x),
                 _rigidbody.position.y);
     }
 
     private void moveCamera() {
 
         _camera.transform.position = new Vector3(
-                    Mathf.Clamp(_transform.position.x, minXPermittedForCamera + _camera.orthographicSize, 999999f),
+                    Mathf.Clamp(_transform.position.x, minXPermittedForCamera + _camera.orthographicSize,
+                    gameEndPlane.position.x - _camera.orthographicSize),
                     Mathf.Clamp(_transform.position.y, 0f, 999999f),
                     -10f);
     }
@@ -254,15 +259,10 @@ public class PlayerController : MonoBehaviour {
     private void OnCollisionEnter2D(Collision2D other) {
         if (other.gameObject.CompareTag("DeathPlane")) {
             doDie();
-        } else if (other.gameObject.CompareTag("EnemyHurtPoint")) {
 
-            EnemyController enemyController = other.gameObject.GetComponent<EnemyController>();
-            if (enemyController != null) {
-                enemyController.damage();
-            }
+        } else if (other.gameObject.CompareTag("Enemy")) {
+            print("OnCollisionEnter2D Enemy");
 
-        } else if (other.gameObject.CompareTag("EnemyBody")) {
-            print("OnCollisionEnter2D other.gameObject.CompareTag(\"EnemyBody\")");
             if (superPlayer) {
 
                 EnemyController enemyController = other.gameObject.GetComponent<EnemyController>();
@@ -274,7 +274,7 @@ public class PlayerController : MonoBehaviour {
             }
         }
     }
-
+    private float lastDamage;
     public void OnTriggerEnter2D(Collider2D other) {
         if (other.gameObject.CompareTag("Coin")) {
             catchCoin(other.gameObject);
@@ -291,24 +291,16 @@ public class PlayerController : MonoBehaviour {
             catchRedDiamond(other.gameObject);
         } else if (other.gameObject.CompareTag("BossPhase")) {
             enterBossPhase(other.gameObject);
-        } else if (other.gameObject.CompareTag("EnemyHurtPoint")) {
+        } else if (other.gameObject.CompareTag("Enemy")) {
+            print("OnCollisionEnter2D Enemy");
 
-            EnemyController enemyController = other.gameObject.GetComponent<EnemyController>();
-            if (enemyController != null) {
-                enemyController.damage();
-            }
-        } else if (other.gameObject.CompareTag("EnemyBody")) {
-            print("OnTriggerEnter2D other.gameObject.CompareTag(\"EnemyBody\")");
-
-            if (superPlayer) {
-
+            if (_rigidbody.velocity.y < 0f) {
                 EnemyController enemyController = other.gameObject.GetComponent<EnemyController>();
                 if (enemyController != null) {
                     enemyController.damage();
                 }
-            } else {
-                damage();
             }
+
         }
     }
 
@@ -350,12 +342,15 @@ public class PlayerController : MonoBehaviour {
 
     public void OnCollisionExit2D(Collision2D other) {
         _animator.SetInteger("PlayerState", 2);
-        //grounded = false;
     }
 
     public void damage() {
 
         if (superPlayer) {
+            return;
+        }
+
+        if (lastDamage < 1f) {
             return;
         }
 
@@ -371,6 +366,7 @@ public class PlayerController : MonoBehaviour {
             _transform.position = spawnPoint.position;
             _animator.SetInteger("PlayerState", 0);
             lastDeath = 0f;
+            lastDamage = 0f;
 
         } else if (rings <= 0) {
             rings = 0;

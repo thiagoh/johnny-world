@@ -68,7 +68,6 @@ public class EnemyController : MonoBehaviour {
         grounded = true;
         lastJump = 0f;
         checkLastJumpPeriod = 1f;
-        chanceOfJump = 0.4f;
         walkFasterForPlayerDetected = 0f;
 
         if (boss) {
@@ -79,8 +78,12 @@ public class EnemyController : MonoBehaviour {
         }
 
         speed = getInitialSpeed();
+        chanceOfJump = getChangeOfJump();
     }
 
+    private float getChangeOfJump() {
+        return boss ? 0.2f : 0.4f;
+    }
     private float getInitialSpeed() {
         if (boss) {
             return INITIAL_BOSS_SPEED;
