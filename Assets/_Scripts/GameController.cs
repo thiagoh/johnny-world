@@ -20,9 +20,11 @@ public class GameController : MonoBehaviour {
     public Text RingsLabel;
 
     [Header("Sound clips")]
-    // background song
+    // background sound track
     public AudioSource backgroundSound;
-    // super player sound
+    // boss phase sound track
+    public AudioSource bossPhaseSound;
+    // super player sound track
     public AudioSource superPlayerSound;
 
     // Use this for initialization

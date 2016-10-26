@@ -5,8 +5,11 @@ public class EnemyController : MonoBehaviour {
 
     private static float MAX_SPEED = 3.5f;
     private static float INITIAL_SPEED = 2f;
+    private static float MAX_BOSS_SPEED = MAX_SPEED * 2f;
+    private static float INITIAL_BOSS_SPEED = INITIAL_SPEED * 2f;
     private static float WALK_FASTER_WHEN_DETECT_PLAYER_DURATION = 3f;
-    public static int POINTS_EARNED_BY_KILLING_ME = 100;
+    public static int POINTS_EARNED_BY_KILLING_BOSS = 1000;
+    public static int POINTS_EARNED_BY_KILLING_REGULAR_ENEMY = 100;
 
     private PlayerController playerController;
     private Transform _transform;
@@ -37,8 +40,12 @@ public class EnemyController : MonoBehaviour {
     // walk faster when detect player
     private float walkFasterForPlayerDetected = 0;
 
+    // enemy lives
+    public int lives;
     // some enemies are jumpers and other are not
     public bool jumper;
+    // is this enemy the boss
+    public bool boss;
 
     [Header("Sound Clips")]
     public AudioSource deathSound;
@@ -57,12 +64,37 @@ public class EnemyController : MonoBehaviour {
         sightEnd = _transform.Find("SightEnd");
         lineOfSight = _transform.Find("LineOfSight");
 
+        lives = 1;
         grounded = true;
-        speed = INITIAL_SPEED;
         lastJump = 0f;
         checkLastJumpPeriod = 1f;
         chanceOfJump = 0.4f;
         walkFasterForPlayerDetected = 0f;
+
+        if (boss) {
+            lives = 3;
+            jumper = true;
+            _transform.localScale = new Vector3(_transform.localScale.x * 1.25f, _transform.localScale.y * 1.25f, _transform.localScale.z);
+            GetComponent<SpriteRenderer>().color = new Color(255, 47, 0);
+        }
+
+        speed = getInitialSpeed();
+    }
+
+    private float getInitialSpeed() {
+        if (boss) {
+            return INITIAL_BOSS_SPEED;
+        } else {
+            return INITIAL_SPEED;
+        }
+    }
+
+    private float getMaxSpeed() {
+        if (boss) {
+            return MAX_BOSS_SPEED;
+        } else {
+            return MAX_SPEED;
+        }
     }
 
     void FixedUpdate() {
@@ -105,10 +137,9 @@ public class EnemyController : MonoBehaviour {
 
             if (walkFasterForPlayerDetected > 0f) {
                 // increase speed to maximumSpeedkl
-                speed = Mathf.Clamp(speed * 2, INITIAL_SPEED, MAX_SPEED);
+                speed = Mathf.Clamp(speed * 2, getInitialSpeed(), getMaxSpeed());
             } else {
-
-                speed = INITIAL_SPEED;
+                speed = getInitialSpeed();
             }
 
             if (jumper && lastJump > checkLastJumpPeriod) {
@@ -148,12 +179,25 @@ public class EnemyController : MonoBehaviour {
         }
     }
 
+    public void damage() {
+
+        lives -= 1;
+        deathSound.Play();
+
+        if (lives <= 0) {
+            die();
+        }
+    }
+
     public void die() {
 
-        deathSound.Play();
         _transform.position = Vector2.one * 99999999f;
 
-        playerController.incrementScore(POINTS_EARNED_BY_KILLING_ME);
+        if (boss) {
+            playerController.incrementScore(POINTS_EARNED_BY_KILLING_BOSS);
+        } else {
+            playerController.incrementScore(POINTS_EARNED_BY_KILLING_REGULAR_ENEMY);
+        }
 
         Destroy(gameObject, 3);
     }

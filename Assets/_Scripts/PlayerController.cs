@@ -4,38 +4,74 @@ using System;
 
 public class PlayerController : MonoBehaviour {
 
+    // min visible x of any item in the game
     private static float MIN_VISIBLE_CAMERA_X = -1.2f;
+    // max velocity permitted
     private static float MAX_VELOCITY = 3f;
+    // how long is the player going to be super in case of catch a red diamond
     private static float SUPER_PLAYER_BONUS_TIME = 8f;
 
+    // current velocity
     public float velocity;
+    // force of jump
     public float jumpForce;
 
+    // rigs property
     public int rings { get; set; }
+    // lives property
     public int lives { get; set; }
+    // score property
     public int score { get; set; }
-
+    // camera reference
     private Camera _camera;
+    // spawn point of player
     private Transform spawnPoint;
+    // boss phase spawn point of player
+    private Transform bossPhaseSpawnPoint;
+    // reference to game controller
     private GameController gameController;
+    // min X is permitted to player move
+    private float minXPermittedForPlayer;
+    // min X is permitted to camera move
+    private float minXPermittedForCamera;
 
-    private Transform sightStart;
-    private Transform sightEnd1;
-    private Transform sightEnd2;
-    private Transform sightEnd3;
+    // player's tranform
     private Transform _transform;
+    // player's rigidbody
     private Rigidbody2D _rigidbody;
+    // how long is a super player
     private float superPlayerTime;
+    // is currently a super player (special speed!)
     private bool superPlayer;
+    // is moving right or left control
     private float move;
+    // is jumping control
     private float jump;
+    // last jump timestamp
     private float lastJump;
+    // last death timestamp
     private float lastDeath;
+    // is there a spring below?
     private bool springBelow;
+    // facing right?
     private bool facingRight;
+    // is grounded?
     private bool grounded;
+    // player animator
     private Animator _animator;
+    // can jump again control
     private bool canJumpAgain;
+    // is in boss phase
+    private bool bossPhase;
+
+    // player's sight start
+    private Transform sightStart;
+    // player's sight end 1
+    private Transform sightEnd1;
+    // player's sight end 2
+    private Transform sightEnd2;
+    // player's sight end 3
+    private Transform sightEnd3;
 
     [Header("Sound Clips")]
     public AudioSource jumpSound;
@@ -53,6 +89,7 @@ public class PlayerController : MonoBehaviour {
         gameController = GameObject.FindObjectOfType<GameController>();
         _camera = GameObject.Find("MainCamera").GetComponent<Camera>();
         spawnPoint = GameObject.Find("SpawnPoint").transform;
+        bossPhaseSpawnPoint = GameObject.Find("BossPhaseSpawnPoint").transform;
 
         _transform = GetComponent<Transform>();
         _rigidbody = GetComponent<Rigidbody2D>();
@@ -63,6 +100,7 @@ public class PlayerController : MonoBehaviour {
         sightEnd2 = _transform.Find("SightEnd2");
         sightEnd3 = _transform.Find("SightEnd3");
 
+        bossPhase = false;
         springBelow = false;
         move = 0;
         jump = 0;
@@ -77,7 +115,8 @@ public class PlayerController : MonoBehaviour {
 
         lastJump = 0f;
         lastDeath = 0f;
-
+        minXPermittedForPlayer = GameController.MIN_VISIBLE_GAME_ITEM_X;
+        minXPermittedForCamera = MIN_VISIBLE_CAMERA_X;
         _transform.position = spawnPoint.position;
     }
 
@@ -177,8 +216,16 @@ public class PlayerController : MonoBehaviour {
     public void LateUpdate() {
 
         _rigidbody.position = new Vector2(
-                Mathf.Clamp(_rigidbody.position.x, GameController.MIN_VISIBLE_GAME_ITEM_X, 999999f),
+                Mathf.Clamp(_rigidbody.position.x, minXPermittedForPlayer, 999999f),
                 _rigidbody.position.y);
+    }
+
+    private void moveCamera() {
+
+        _camera.transform.position = new Vector3(
+                    Mathf.Clamp(_transform.position.x, minXPermittedForCamera + _camera.orthographicSize, 999999f),
+                    Mathf.Clamp(_transform.position.y, 0f, 999999f),
+                    -10f);
     }
 
     public static bool isBetween(float v, float from, float to) {
@@ -224,7 +271,7 @@ public class PlayerController : MonoBehaviour {
 
                 EnemyController enemyController = other.gameObject.GetComponent<EnemyController>();
                 if (enemyController != null) {
-                    enemyController.die();
+                    enemyController.damage();
                 }
             } else {
                 damage();
@@ -246,18 +293,39 @@ public class PlayerController : MonoBehaviour {
 
         } else if (other.gameObject.CompareTag("RedDiamond")) {
             catchRedDiamond(other.gameObject);
+        } else if (other.gameObject.CompareTag("BossPhase")) {
+            enterBossPhase(other.gameObject);
         } else if (other.gameObject.CompareTag("Enemy")) {
 
             if (superPlayer) {
 
                 EnemyController enemyController = other.gameObject.GetComponent<EnemyController>();
                 if (enemyController != null) {
-                    enemyController.die();
+                    enemyController.damage();
                 }
             } else {
                 damage();
             }
         }
+    }
+
+    private void enterBossPhase(GameObject bossPhasePlane) {
+
+        if (bossPhase) {
+            return;
+        }
+
+        bossPhase = true;
+        minXPermittedForPlayer = bossPhasePlane.transform.position.x;
+        minXPermittedForCamera = bossPhasePlane.transform.position.x;
+        spawnPoint = bossPhaseSpawnPoint.transform;
+        if (gameController.backgroundSound.isPlaying) {
+            gameController.backgroundSound.Stop();
+        }
+        if (gameController.superPlayerSound.isPlaying) {
+            gameController.superPlayerSound.Stop();
+        }
+        gameController.bossPhaseSound.Play();
     }
 
     private void catchRedDiamond(GameObject gameObject) {
@@ -339,12 +407,6 @@ public class PlayerController : MonoBehaviour {
         lastDeath = 0f;
     }
 
-    private void moveCamera() {
 
-        _camera.transform.position = new Vector3(
-                    Mathf.Clamp(_transform.position.x, MIN_VISIBLE_CAMERA_X, 999999f),
-                    Mathf.Clamp(_transform.position.y, 0f, 999999f),
-                    -10f);
-    }
 
 }
