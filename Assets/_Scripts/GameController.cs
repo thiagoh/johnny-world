@@ -63,8 +63,8 @@ public class GameController : MonoBehaviour {
         LivesLabel.text = "Lives: " + playerController.lives;
         ScoreLabel.text = "Score: " + playerController.score;
         RingsLabel.text = "Rings: " + playerController.rings;
+        FinalScoreLabel.text = "Final Score: " + playerController.score;
     }
-
 
     public void stopSounds() {
         if (backgroundSound.isPlaying) {
@@ -82,6 +82,21 @@ public class GameController : MonoBehaviour {
     }
 
     public void finishGame() {
+
+        FinalScoreLabel.gameObject.SetActive(true);
+        GameOverLabel.gameObject.SetActive(true);
+
+        LivesLabel.gameObject.SetActive(false);
+        ScoreLabel.gameObject.SetActive(false);
+        RingsLabel.gameObject.SetActive(false);
+
+        playerController.gameObject.SetActive(false);
+
+        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        foreach (var item in enemies) {
+            item.SetActive(false);
+        }
+
         stopSounds();
         finishGameSound.Play();
     }
